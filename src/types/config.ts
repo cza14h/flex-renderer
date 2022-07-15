@@ -1,14 +1,12 @@
-
 export type FlexContainerConfig = {
   height?: number;
   width?: number;
 };
 
-type SupportedType = 'com';
+export type SupportedType = 'com';
 
 type LayerItem = {
   id: string;
-  parent: string | null;
   children?: LayerItem[];
   type: SupportedType;
 };
