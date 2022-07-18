@@ -20,7 +20,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "src/*":["./src/*"]
+      "src/*":["./src/*"],
+      "@app/*":["./src/*"]
     }
   },
   "include": [

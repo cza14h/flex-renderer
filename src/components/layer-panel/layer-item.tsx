@@ -1,13 +1,36 @@
-import React from 'react';
+import React, { FC, useContext } from 'react';
+import { BranchContext } from '@app/context';
+import arrow from '@app/assets/arrow.svg';
+import style from './layer-item.module.scss';
 
-type LayerLeafProps = {
+type LayerItemProps = {
   indent: number;
+  name: string;
+  height: number;
 };
 
-type LayerBranchProps = {
-  isExpand: boolean;
-} & LayerLeafProps;
+export const LayerBranch: FC<LayerItemProps> = ({ name, height }) => {
+  const ctx = useContext(BranchContext);
+  const isExpand = ctx.expanded[name];
 
-const LayerBranch = () => {};
+  const className = isExpand ? 'expanded' : ' collapsed';
 
-const LayerLeaf = () => {};
+  const toggleExpand = () => {
+    ctx.toggleExpand(name);
+  };
+
+  return (
+    <div className={style['layer-item']} style={{ height }} draggable>
+      <img src={arrow} className={className + ' arrow'} alt="arrow" onClick={toggleExpand} />
+      {name}
+    </div>
+  );
+};
+
+export const LayerLeaf: FC<LayerItemProps> = ({ name, height }) => {
+  return (
+    <div className={style['layer-item']} style={{ height }} draggable>
+      {name}
+    </div>
+  );
+};

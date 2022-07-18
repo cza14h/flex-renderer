@@ -3,9 +3,9 @@ export type FlexContainerConfig = {
   width?: number;
 };
 
-export type SupportedType = 'com';
+export type SupportedType = 'com' | 'group';
 
-type LayerItem = {
+export type LayerItem = {
   id: string;
   children?: LayerItem[];
   type: SupportedType;
