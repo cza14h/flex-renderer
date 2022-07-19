@@ -28,6 +28,10 @@ const treeLayer: SingleLayer = [
         id: '1-4',
         type: 'com',
       },
+      {
+        id: '1-5',
+        type: 'com',
+      },
     ],
   },
   {
