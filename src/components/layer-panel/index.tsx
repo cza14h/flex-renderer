@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LayerLeaf, LayerBranch } from './layer-item';
-import { BranchContext } from '@app/context';
-import type { LayerItem, SingleLayer } from '@app/types';
+import type { LayerItem, SingleLayer, SupportedType } from '@app/types';
 import DropIndicator from './indicator';
 
 type LayerPanelProps = {
@@ -32,13 +31,18 @@ function getCurrentList(expanded: Record<string, string>, layerConfig: SingleLay
   return res;
 }
 
+export type SortPayload = {
+  chain: string;
+  index: number;
+};
+
 const itemHeight = 24;
 const LayerPanel: FC<LayerPanelProps> = ({ layerConfig }) => {
   const outer = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<Record<string, string>>({});
   const [rectHeight, setRectHeight] = useState(0);
   const [offset, setOffset] = useState(0);
-  const [dragSort, setDragSort] = useState<string | null>(null);
+  const [dragSort, setDragSort] = useState<SortPayload | null>(null);
 
   const toggleExpanded = useRef(function toggleExpand(id: string) {
     setExpanded((prev) => {
@@ -49,24 +53,42 @@ const LayerPanel: FC<LayerPanelProps> = ({ layerConfig }) => {
     });
   });
 
-  const reportHover = useCallback((e: React.DragEvent, chain: string) => {
-    const { clientY } = e;
-    const { top, height } = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    let res = chain;
-    if (clientY > top + height / 2) {
-    }
+  const reportHover = useCallback(
+    (e: React.DragEvent, payload: SortPayload, type: SupportedType) => {
+      let { chain, index } = payload;
+      const { clientY } = e;
+      const { top, height } = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      let res = chain.split('');
+      // if (type === 'com') {
+      //   if (clientY > top + height / 2) {
+      //     res[res.length - 1] = `${Number(res[res.length - 1]) + 1}`;
+      //   }
+      // } else {
+      //   if (clientY > top + (3 * height) / 4) {
+      //     res.push('0');
+      //   } else if (clientY > top + height / 4) {
+      //     res.push('0');
+      //   }
+      // }
 
-    setDragSort(res);
-  }, []);
+      // if (clientY > top + height / 2) {
+      //   res[res.length - 1] = `${Number(res[res.length - 1]) + 1}`;
+      // }
+
+      setDragSort({ chain: res.join(''), index });
+    },
+    [],
+  );
 
   const list = useMemo(() => getCurrentList(expanded, layerConfig), [expanded, layerConfig]);
   const visibleList = useMemo(() => {
     const index = Math.floor(offset / itemHeight);
     const length = Math.ceil(rectHeight / itemHeight);
-    return list.slice(index, index + length + 1).map((e) => {
+    return list.slice(index, index + length + 1).map((e, i) => {
       const Com = e.type === 'group' ? LayerBranch : LayerLeaf;
       return (
         <Com
+          flattenIndex={index + i}
           key={e.id}
           expanded={!!expanded[e.id]}
           chain={e.chain}
@@ -94,6 +116,7 @@ const LayerPanel: FC<LayerPanelProps> = ({ layerConfig }) => {
     return () => observer.disconnect();
   }, []);
 
+  // console.log(dragSort);
   return (
     <div ref={outer} style={{ width: 300, height: '100%', overflow: 'auto' }} onScroll={onScroll}>
       <div className="inner" style={{ height: list.length * itemHeight }}>
@@ -105,7 +128,7 @@ const LayerPanel: FC<LayerPanelProps> = ({ layerConfig }) => {
           >
             {visibleList}
           </div>
-          {dragSort && <DropIndicator chain={dragSort} height={itemHeight} />}
+          {dragSort && <DropIndicator {...dragSort} height={itemHeight} />}
         </>
       </div>
     </div>

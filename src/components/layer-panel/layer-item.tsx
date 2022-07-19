@@ -1,25 +1,29 @@
 import React, { Component, ReactNode } from 'react';
 import arrow from '@app/assets/arrow.svg';
 import style from './layer-item.module.scss';
+import { SupportedType } from 'src/types';
+import type { SortPayload } from '.';
 
 type LayerItemProps = {
   id: string;
+  flattenIndex: number;
   chain: string;
   height: number;
   children?: ReactNode;
   expanded: boolean;
   toggleExpanded: (id: string) => void;
-  reportHover(e: React.DragEvent, chain: string): void;
-  setDragSort: React.Dispatch<React.SetStateAction<string | null>>;
+  reportHover(e: React.DragEvent, chain: SortPayload, type: SupportedType): void;
+  setDragSort: React.Dispatch<React.SetStateAction<SortPayload | null>>;
 };
 
 class DraggableSort extends Component<LayerItemProps> {
   reportHover = (e: React.DragEvent) => {
-    this.props.reportHover(e, this.props.chain);
+    // this.props.reportHover(e, this.props.chain);
   };
 
   dragStart = (e: React.DragEvent) => {
-    this.props.setDragSort(this.props.id);
+    const { chain, flattenIndex } = this.props;
+    this.props.setDragSort({ chain, index: flattenIndex });
   };
 
   onNodeDragEnd = () => {
@@ -29,6 +33,7 @@ class DraggableSort extends Component<LayerItemProps> {
   onNodeDrop = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     event.stopPropagation();
+    this.props.setDragSort(null);
   };
 
   render(): React.ReactNode {
@@ -37,6 +42,7 @@ class DraggableSort extends Component<LayerItemProps> {
       <div
         className={style['layer-item']}
         style={{
+          height: this.props.height,
           paddingLeft: chain.length ? chain.length * 10 + 8 : 0,
         }}
         draggable
@@ -58,6 +64,11 @@ export class LayerBranch extends DraggableSort {
     this.props.toggleExpanded(this.props.id);
   };
 
+  reportHover = (e: React.DragEvent) => {
+    const { chain, flattenIndex } = this.props;
+    this.props.reportHover(e, { chain, index: flattenIndex }, 'group');
+  };
+
   renderViews() {
     const className = this.props.expanded ? 'expanded' : ' collapsed';
 
@@ -71,6 +82,10 @@ export class LayerBranch extends DraggableSort {
 }
 
 export class LayerLeaf extends DraggableSort {
+  reportHover = (e: React.DragEvent) => {
+    const { chain, flattenIndex } = this.props;
+    this.props.reportHover(e, { chain, index: flattenIndex }, 'com');
+  };
   renderViews(): React.ReactNode {
     return this.props.id;
   }

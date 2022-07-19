@@ -20,6 +20,14 @@ const treeLayer: SingleLayer = [
         id: '1-2',
         type: 'com',
       },
+      {
+        id: '1-3',
+        type: 'com',
+      },
+      {
+        id: '1-4',
+        type: 'com',
+      },
     ],
   },
   {

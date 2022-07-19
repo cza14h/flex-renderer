@@ -4,17 +4,12 @@ import styles from './layer-item.module.scss';
 type DropIndicatorProps = {
   height: number;
   chain: string;
+  index: number;
 };
 
-const DropIndicator: FC<DropIndicatorProps> = ({ chain, height }) => {
+const DropIndicator: FC<DropIndicatorProps> = ({ chain, height, index }) => {
   const left = chain.length ? chain.length * 10 + 8 : 0;
-  const top =
-    (chain.split('').reduce((last, curr) => {
-      return Number(curr) + last;
-    }, 0) +
-      chain.length -
-      1) *
-    height;
+  const top = index * height;
   return (
     <div
       className={styles['drop-indicator']}
