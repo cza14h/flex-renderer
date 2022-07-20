@@ -1,24 +1,44 @@
-import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Component, createRef } from 'react';
 import { LayerLeaf, LayerBranch } from './layer-item';
 import type { LayerItem, SingleLayer, SupportedType } from '@app/types';
 import DropIndicator from './indicator';
+import debounce from 'lodash.debounce';
+import { createMemo } from '@app/utils';
 
 type LayerPanelProps = {
   layerConfig: SingleLayer;
+  sortLayer(from: string[], to: string): void;
 };
 
-type FlattenList = LayerItem & {
-  chain: string;
+type LayerPanelState = {
+  rectHeight: number;
+  expanded: Record<string, string>;
+  scrollTop: number;
+  dragSort: SortPayload | null;
 };
+
+type LayerMap = Map<
+  string,
+  LayerItem & {
+    chain: string;
+  }
+>;
+
+export type ReportHoverType = (
+  e: React.DragEvent,
+  chain: SortPayload,
+  expanded: boolean,
+  type: SupportedType,
+) => void;
 
 function currentTreeList(
   expanded: Record<string, string>,
   layerConfig: SingleLayer,
   chain: string,
-  res: FlattenList[],
+  res: LayerMap,
 ) {
   layerConfig.forEach((val, i) => {
-    res.push({ ...val, chain: `${chain}${i}` });
+    res.set(val.id, { ...val, chain: `${chain}${i}` });
     if (expanded[val.id] && val.children?.length) {
       currentTreeList(expanded, val.children, `${chain}${i}`, res);
     }
@@ -26,7 +46,7 @@ function currentTreeList(
 }
 
 function getCurrentList(expanded: Record<string, string>, layerConfig: SingleLayer) {
-  const res: FlattenList[] = [];
+  const res: LayerMap = new Map();
   currentTreeList(expanded, layerConfig, '', res);
   return res;
 }
@@ -37,102 +57,136 @@ export type SortPayload = {
 };
 
 const itemHeight = 24;
-const LayerPanel: FC<LayerPanelProps> = ({ layerConfig }) => {
-  const outer = useRef<HTMLDivElement>(null);
-  const [expanded, setExpanded] = useState<Record<string, string>>({});
-  const [rectHeight, setRectHeight] = useState(0);
-  const [offset, setOffset] = useState(0);
-  const [dragSort, setDragSort] = useState<SortPayload | null>(null);
 
-  const toggleExpanded = useRef(function toggleExpand(id: string) {
-    setExpanded((prev) => {
-      const next = { ...prev };
-      if (prev[id]) delete next[id];
-      else next[id] = id;
-      return next;
-    });
-  });
-
-  const reportHover = useCallback(
-    (e: React.DragEvent, payload: SortPayload, type: SupportedType) => {
-      let { chain, index } = payload;
-      const { clientY } = e;
-      const { top, height } = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      let res = chain.split('');
-      // if (type === 'com') {
-      //   if (clientY > top + height / 2) {
-      //     res[res.length - 1] = `${Number(res[res.length - 1]) + 1}`;
-      //   }
-      // } else {
-      //   if (clientY > top + (3 * height) / 4) {
-      //     res.push('0');
-      //   } else if (clientY > top + height / 4) {
-      //     res.push('0');
-      //   }
-      // }
-
-      // if (clientY > top + height / 2) {
-      //   res[res.length - 1] = `${Number(res[res.length - 1]) + 1}`;
-      // }
-
-      setDragSort({ chain: res.join(''), index });
-    },
-    [],
-  );
-
-  const list = useMemo(() => getCurrentList(expanded, layerConfig), [expanded, layerConfig]);
-  const visibleList = useMemo(() => {
-    const index = Math.floor(offset / itemHeight);
-    const length = Math.ceil(rectHeight / itemHeight);
-    return list.slice(index, index + length + 1).map((e, i) => {
-      const Com = e.type === 'group' ? LayerBranch : LayerLeaf;
-      return (
-        <Com
-          flattenIndex={index + i}
-          key={e.id}
-          expanded={!!expanded[e.id]}
-          chain={e.chain}
-          id={e.id}
-          height={itemHeight}
-          setDragSort={setDragSort}
-          reportHover={reportHover}
-          toggleExpanded={toggleExpanded.current}
-        />
-      );
-    });
-  }, [offset, rectHeight, list, expanded, reportHover]);
-
-  const onScroll = (e: React.UIEvent) => {
-    setOffset(e.currentTarget.scrollTop);
+class LayerPanel extends Component<LayerPanelProps, LayerPanelState> {
+  ref = createRef<HTMLDivElement>();
+  state: LayerPanelState = {
+    rectHeight: 0,
+    expanded: {},
+    scrollTop: 0,
+    dragSort: null,
   };
 
-  useEffect(() => {
-    //debounce
-    const observer = new ResizeObserver((entries) => {
-      const { height } = entries[0].contentRect;
-      setRectHeight(height);
-    });
-    observer.observe(outer.current!);
-    return () => observer.disconnect();
-  }, []);
+  onScroll = (e: React.UIEvent) => {
+    this.setState({ scrollTop: e.currentTarget.scrollTop });
+  };
 
-  // console.log(dragSort);
-  return (
-    <div ref={outer} style={{ width: 300, height: '100%', overflow: 'auto' }} onScroll={onScroll}>
-      <div className="inner" style={{ height: list.length * itemHeight }}>
-        <>
-          <div
-            style={{
-              transform: `translateY(${Math.floor(offset / itemHeight) * itemHeight}px)`,
-            }}
-          >
-            {visibleList}
-          </div>
-          {dragSort && <DropIndicator {...dragSort} height={itemHeight} />}
-        </>
-      </div>
-    </div>
+  toggleExpand = (id: string) => {
+    const { expanded } = this.state;
+    const next = { ...expanded };
+    if (next[id]) delete next[id];
+    else next[id] = id;
+    this.setState({ expanded: next });
+  };
+
+  setDragSort = (s: SortPayload | null) => {
+    this.setState({ dragSort: s });
+  };
+
+  reportHover: ReportHoverType = (e, payload, expanded, type) => {
+    const { clientY, currentTarget } = e;
+    if (!currentTarget) return;
+    const { top, height } = currentTarget.getBoundingClientRect();
+    let { chain, index } = payload;
+    let res = chain.split('');
+    if (type === 'com') {
+      if (clientY > top + height / 2) {
+        res[res.length - 1] = `${Number(res[res.length - 1]) + 1}`;
+        index++;
+      }
+    } else {
+      if (expanded) {
+        if (clientY > top + height / 2) {
+          res.push('0');
+          index++;
+        }
+      } else {
+        if (clientY > top + (3 * height) / 4) {
+          res[res.length - 1] = `${Number(res[res.length - 1]) + 1}`;
+          index++;
+        } else if (clientY > top + height / 2) {
+          res.push('0');
+          index++;
+        }
+      }
+    }
+    const newChain = res.join('');
+    if (this.state.dragSort?.chain === newChain && this.state.dragSort.index === index) return;
+    this.setState({ dragSort: { chain: newChain, index } });
+  };
+
+  resort = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const operator = e.dataTransfer.getData('layer/dragStart');
+  };
+
+  getCurrentList = createMemo(getCurrentList);
+
+  getVisibleList = createMemo(
+    (scrollTop: number, rectHeight: number, expanded: Record<string, string>, map: LayerMap) => {
+      const list = Array.from(map.values());
+      const index = Math.floor(scrollTop / itemHeight);
+      const length = Math.ceil(rectHeight / itemHeight);
+      return list.slice(index, index + length + 1).map((e, i) => {
+        const Com = e.type === 'group' ? LayerBranch : LayerLeaf;
+        return (
+          <Com
+            flattenIndex={index + i}
+            key={e.id}
+            expanded={!!expanded[e.id]}
+            chain={e.chain}
+            id={e.id}
+            height={itemHeight}
+            setDragSort={this.setDragSort}
+            reportHover={this.reportHover}
+            toggleExpanded={this.toggleExpand}
+            onNodeDragEnd={this.resort}
+          />
+        );
+      });
+    },
   );
-};
+
+  observer?: ResizeObserver;
+  componentDidMount() {
+    this.observer = new ResizeObserver(
+      debounce((entries) => {
+        const { height } = entries[0].contentRect;
+        this.setState({ rectHeight: height });
+      }, 200),
+    );
+    this.observer.observe(this.ref.current!);
+  }
+  componentWillUnmount() {
+    this.observer?.disconnect();
+  }
+
+  render() {
+    const { scrollTop, dragSort, expanded, rectHeight } = this.state;
+    const list = this.getCurrentList(expanded, this.props.layerConfig);
+    const visibleList = this.getVisibleList(scrollTop, rectHeight, expanded, list);
+    return (
+      <div
+        ref={this.ref}
+        style={{ width: 300, height: '100%', overflow: 'auto' }}
+        onScroll={this.onScroll}
+      >
+        <div className="inner" style={{ height: list.size * itemHeight }}>
+          <>
+            <div
+              style={{
+                transform: `translateY(${Math.floor(scrollTop / itemHeight) * itemHeight}px)`,
+              }}
+            >
+              {visibleList}
+            </div>
+            {dragSort && <DropIndicator {...dragSort} height={itemHeight} />}
+          </>
+        </div>
+      </div>
+    );
+  }
+}
 
 export default LayerPanel;
