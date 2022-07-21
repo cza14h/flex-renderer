@@ -3,7 +3,7 @@ export type GlobalTheme = {
 }
 
 
-export type MobilePagenfo = {
+export type MobilePageInfo = {
   id: string;
   name: string;
   backgroundImage: string | null;

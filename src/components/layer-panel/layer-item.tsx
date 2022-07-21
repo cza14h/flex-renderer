@@ -15,7 +15,7 @@ type LayerItemProps = {
   toggleExpanded: (id: string) => void;
   reportHover: ReportHoverType;
   setDragSort: (s: SortPayload | null) => void;
-  onNodeDragEnd: (e: React.DragEvent) => void;
+  onNodeDragEnd: (e: React.DragEvent, id: string) => void;
 };
 
 class DraggableSort extends Component<LayerItemProps> {
@@ -28,17 +28,15 @@ class DraggableSort extends Component<LayerItemProps> {
   };
 
   dragStart = (e: React.DragEvent) => {
-    const { chain, flattenIndex, id } = this.props;
-    e.dataTransfer.setData('layer/dragStart', id);
+    const { chain, flattenIndex } = this.props;
     e.dataTransfer.dropEffect = 'move';
-    e.dataTransfer.effectAllowed = 'move';
     this.props.setDragSort({ chain, index: flattenIndex });
   };
 
   onNodeDragEnd = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    this.props.setDragSort(null);
+    this.props.onNodeDragEnd(e, this.props.id);
   };
 
   render(): React.ReactNode {

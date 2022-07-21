@@ -3,7 +3,7 @@ import { LayerLeaf, LayerBranch } from './layer-item';
 import type { LayerItem, SingleLayer, SupportedType } from '@app/types';
 import DropIndicator from './indicator';
 import debounce from 'lodash.debounce';
-import { createMemo } from '@app/utils';
+import { createMemo, preventDefault } from '@app/utils';
 
 type LayerPanelProps = {
   layerConfig: SingleLayer;
@@ -115,10 +115,16 @@ class LayerPanel extends Component<LayerPanelProps, LayerPanelState> {
     this.setState({ dragSort: { chain: newChain, index } });
   };
 
-  resort = (e: React.DragEvent) => {
+  resort = (e: React.DragEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
-    const operator = e.dataTransfer.getData('layer/dragStart');
+    const { dragSort } = this.state;
+    if (!dragSort) return;
+    //TODO batch move consider by id
+    const list = this.getCurrentList(this.state.expanded, this.props.layerConfig);
+    const emitter = list.get(id)!.chain;
+    this.props.sortLayer([emitter], dragSort.chain);
+    this.setDragSort(null);
   };
 
   getCurrentList = createMemo(getCurrentList);
@@ -169,8 +175,10 @@ class LayerPanel extends Component<LayerPanelProps, LayerPanelState> {
     return (
       <div
         ref={this.ref}
+        className="layer-panel"
         style={{ width: 300, height: '100%', overflow: 'auto' }}
         onScroll={this.onScroll}
+        onDragOver={preventDefault}
       >
         <div className="inner" style={{ height: list.size * itemHeight }}>
           <>

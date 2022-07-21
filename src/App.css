@@ -1,5 +1,15 @@
 .App {
   text-align: center;
+  display: flex;
+}
+
+.App .layer-panel {
+  border-right:1px solid #282c34;
+}
+
+.App .layer-panel .inner{
+  position: relative;
+  width: 100%;
 }
 
 .App-logo {
