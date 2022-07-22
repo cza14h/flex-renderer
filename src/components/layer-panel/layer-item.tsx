@@ -1,7 +1,7 @@
 import React, { Component, ReactNode } from 'react';
 import arrow from '@app/assets/arrow.svg';
 import style from './layer-item.module.scss';
-import type { SupportedType } from '@app/types';
+import type { CanvasItemType } from '@app/types';
 import type { SortPayload, ReportHoverType } from '.';
 import { preventDefault } from '@app/utils';
 
@@ -19,7 +19,7 @@ type LayerItemProps = {
 };
 
 class DraggableSort extends Component<LayerItemProps> {
-  type: SupportedType = 'com';
+  type: CanvasItemType = 'com';
   reportHover = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();

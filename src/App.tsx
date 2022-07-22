@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 import LayerPanel from './components/layer-panel';
+import EditorPanel from './components/editor-panel';
 import layerConfig from './mock';
 import produce from 'immer';
 import type { LayerItem, SingleLayer } from './types';
@@ -39,6 +40,7 @@ function App() {
     const insertPath = toInSplit.slice(0, -1);
 
     const insertChain = insertPath.join('');
+    // TODO move inside the layer mutation and iterate the remove index
     const toRemove = fromInSplit.map((val, i) => {
       if (val.length >= to.length && from[i].startsWith(insertChain)) {
         const nextVal = [...val];
@@ -68,6 +70,7 @@ function App() {
   return (
     <div className="App" style={{ height: '100vh' }}>
       <LayerPanel layerConfig={layer} sortLayer={sortLayer} />
+      <EditorPanel layerConfig={layer} breakPoint={500} />
     </div>
   );
 }

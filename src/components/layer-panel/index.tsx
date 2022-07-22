@@ -1,6 +1,6 @@
 import React, { Component, createRef } from 'react';
 import { LayerLeaf, LayerBranch } from './layer-item';
-import type { LayerItem, SingleLayer, SupportedType } from '@app/types';
+import type { LayerItem, SingleLayer, CanvasItemType } from '@app/types';
 import DropIndicator from './indicator';
 import debounce from 'lodash.debounce';
 import { createMemo, preventDefault } from '@app/utils';
@@ -28,7 +28,7 @@ export type ReportHoverType = (
   e: React.DragEvent,
   chain: SortPayload,
   expanded: boolean,
-  type: SupportedType,
+  type: CanvasItemType,
 ) => void;
 
 function currentTreeList(
@@ -71,7 +71,7 @@ class LayerPanel extends Component<LayerPanelProps, LayerPanelState> {
     this.setState({ scrollTop: e.currentTarget.scrollTop });
   };
 
-  toggleExpand = (id: string) => {
+  toggleExpanded = (id: string) => {
     const { expanded } = this.state;
     const next = { ...expanded };
     if (next[id]) delete next[id];
@@ -146,7 +146,7 @@ class LayerPanel extends Component<LayerPanelProps, LayerPanelState> {
             height={itemHeight}
             setDragSort={this.setDragSort}
             reportHover={this.reportHover}
-            toggleExpanded={this.toggleExpand}
+            toggleExpanded={this.toggleExpanded}
             onNodeDragEnd={this.resort}
           />
         );

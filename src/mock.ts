@@ -51,4 +51,16 @@ const treeLayer: SingleLayer = [
 ];
 
 export default treeLayer;
+
+const dashboardComponents = {
+  '1': {},
+  '1-1': {},
+  '1-2': {},
+  '1-3': {},
+  '1-4': {},
+  '1-5': {},
+  '2': {},
+  '2-1': {},
+  '2-2': {},
+};
 // export default virtualScrollLayer;
