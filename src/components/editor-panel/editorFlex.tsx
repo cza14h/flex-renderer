@@ -1,9 +1,12 @@
 import React, { Component, ReactNode } from 'react';
 import type { BasicConfig } from '@app/types';
 
-function genContainerStyle(basic: BasicConfig) {}
+type Basic = BasicConfig.Basic;
+type Flex = BasicConfig.Flex;
 
-type FlexBoxProps<T extends BasicConfig = BasicConfig> = {
+function genContainerStyle(basic: Basic) {}
+
+type FlexBoxProps<T extends Basic = Basic> = {
   // basic
   children?: ReactNode;
 };
