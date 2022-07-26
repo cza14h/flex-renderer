@@ -1,14 +1,14 @@
-import { SingleLayer } from '@app/types';
+import { LayerConfig } from '@app/types';
 import React, { Component, ReactNode } from 'react';
 import styles from './index.module.scss';
 import { GroupContainer, NormalContainer } from './editorFlex';
 
 type EditorPanelProps = {
   breakPoint: number;
-  layerConfig: SingleLayer;
+  layerConfig: LayerConfig.ItemList;
 };
 
-function render(layer: SingleLayer) {
+function render(layer: LayerConfig.ItemList) {
   return layer.reduce<ReactNode[]>((last, { type, id, children }) => {
     const props = { key: id, id };
     if (type === 'group') {

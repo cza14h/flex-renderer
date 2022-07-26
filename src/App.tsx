@@ -4,14 +4,14 @@ import LayerPanel from './components/layer-panel';
 import EditorPanel from './components/editor-panel';
 import layerConfig from './mock';
 import produce from 'immer';
-import type { LayerItem, SingleLayer } from './types';
+import type { LayerConfig } from './types';
 
 function walkAlongPath<T extends { children?: T[] }>(path: number[], tree: T) {
   return path.reduce<T>((last, val) => last.children![val], tree);
 }
 
-function recursiveFilter(layerConfig: SingleLayer) {
-  return layerConfig.reduce<SingleLayer>((last, val) => {
+function recursiveFilter(layerConfig: LayerConfig.ItemList) {
+  return layerConfig.reduce<LayerConfig.ItemList>((last, val) => {
     if (val) {
       const nextVal = { ...val };
       if (val.children) {
@@ -32,7 +32,7 @@ function App() {
 
     const fromInSplit = from.map((val) => val.split('').map(Number));
     const toMovePayload = fromInSplit.map((path) =>
-      walkAlongPath(path, { id: '', type: 'com', children: layer } as LayerItem),
+      walkAlongPath(path, { id: '', type: 'com', children: layer } as LayerConfig.LayerItem),
     );
 
     const toInSplit = to.split('').map(Number);
@@ -52,7 +52,7 @@ function App() {
     // console.log(...toRemove);
 
     const nextLayer = produce(layer, (draft) => {
-      const pseudoRootLayer: LayerItem = { id: '', type: 'com', children: draft };
+      const pseudoRootLayer: LayerConfig.LayerItem = { id: '', type: 'com', children: draft };
       // insert
       const ref = walkAlongPath(insertPath, pseudoRootLayer);
       ref?.children?.splice(lastIndex, 0, ...toMovePayload);

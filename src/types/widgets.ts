@@ -6,9 +6,7 @@ export namespace CFunction {
   }[];
 
   export type Options = {
-    /** @required */
     type: 'CFunction';
-    /** @required */
     default: Value;
     maxFun?: number;
     addable?: number;
@@ -29,3 +27,8 @@ export namespace CSuite {
     };
   };
 }
+
+export type PositionUnit = {
+  value: number | null;
+  unit: string;
+};

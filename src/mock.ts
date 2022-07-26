@@ -1,13 +1,13 @@
-import type { SingleLayer } from './types';
+import type { LayerConfig } from './types';
 //eslint-disable-next-line
-const virtualScrollLayer: SingleLayer = [...Array(100)].map((_, i) => {
+const virtualScrollLayer: LayerConfig.ItemList = [...Array(100)].map((_, i) => {
   return {
     id: `${i}`,
     type: 'com',
   };
 });
 
-const treeLayer: SingleLayer = [
+const treeLayer: LayerConfig.ItemList = [
   {
     id: '1',
     type: 'group',

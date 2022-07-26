@@ -1,12 +1,12 @@
 import React, { Component, createRef } from 'react';
 import { LayerLeaf, LayerBranch } from './layer-item';
-import type { LayerItem, SingleLayer, CanvasItemType } from '@app/types';
 import DropIndicator from './indicator';
 import debounce from 'lodash.debounce';
 import { createMemo, preventDefault } from '@app/utils';
+import type { LayerConfig, ComItemType } from '@app/types';
 
 type LayerPanelProps = {
-  layerConfig: SingleLayer;
+  layerConfig: LayerConfig.ItemList;
   sortLayer(from: string[], to: string): void;
 };
 
@@ -19,7 +19,7 @@ type LayerPanelState = {
 
 type LayerMap = Map<
   string,
-  LayerItem & {
+  LayerConfig.LayerItem & {
     chain: string;
   }
 >;
@@ -28,12 +28,12 @@ export type ReportHoverType = (
   e: React.DragEvent,
   chain: SortPayload,
   expanded: boolean,
-  type: CanvasItemType,
+  type: ComItemType,
 ) => void;
 
 function currentTreeList(
   expanded: Record<string, string>,
-  layerConfig: SingleLayer,
+  layerConfig: LayerConfig.ItemList,
   chain: string,
   res: LayerMap,
 ) {
@@ -45,7 +45,7 @@ function currentTreeList(
   });
 }
 
-function getCurrentList(expanded: Record<string, string>, layerConfig: SingleLayer) {
+function getCurrentList(expanded: Record<string, string>, layerConfig: LayerConfig.ItemList) {
   const res: LayerMap = new Map();
   currentTreeList(expanded, layerConfig, '', res);
   return res;

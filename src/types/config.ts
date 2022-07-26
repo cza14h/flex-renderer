@@ -1,17 +1,6 @@
-import { CSSProperties } from 'react';
-import { CFunction } from './widgets';
+import { CFunction, PositionUnit } from './widgets';
 
-export type CanvasItemType = 'com' | 'group' | 'subcom' | 'logical' | 'subpanel';
-
-export type LayerItem = {
-  id: string;
-  children?: LayerItem[];
-  type: CanvasItemType;
-};
-
-export type SingleLayer = LayerItem[];
-
-export type LayerList = SingleLayer[];
+export type ComItemType = 'com' | 'group' | 'subcom' | 'logical' | 'module';
 
 type ComIdentifier = {
   category: string; // 组件分类
@@ -21,26 +10,18 @@ type ComIdentifier = {
   user: string | null;
 };
 
-type BasicComConfig = {
-  id: string;
-  type: CanvasItemType;
-};
+export namespace LayerConfig {
+  export type LayerItem = {
+    id: string;
+    children?: LayerItem[];
+    type: ComItemType;
+  };
+  export type ItemList = LayerItem[];
+  export type LayerList = ItemList[];
+}
 
-type BasicNodeConfig = {
-  top: number;
-  left: number;
-  disable: boolean;
-} & BasicComConfig;
-
-export type ComNodeConfigType = BasicNodeConfig;
-
-export type LogicalNodeConfigType<T = Record<string, any>> = {
-  cn_name: string;
-  type: 'logical';
-  config: T;
-} & BasicNodeConfig;
-
-namespace DataConfig {
+/** Configs Inside the dashboardComponents */
+export namespace DataConfig {
   export enum SourceType {
     Static = 'Static',
     API = 'API',
@@ -85,8 +66,12 @@ namespace DataConfig {
     source: SourceConfigCollection;
   };
 
-  export type Config = {
-    [sourceName: string]: SourceConfigType;
+  export type SourceConfigRuntime = SourceConfigType & {
+    filters: string[];
+  };
+
+  export type ConfigValue<T = SourceConfigType> = {
+    [sourceName: string]: T;
   };
 }
 
@@ -106,67 +91,121 @@ export namespace BasicConfig {
   } & Basic;
 
   export type Basic = {
-    height: {
-      value: string;
-      unit: string;
-    };
-    width: {
-      value: string;
-      unit: string;
-    };
-    maxHeight: {
-      value: string;
-      unit: string;
-    };
-    minHeight: {
-      value: string;
-      unit: string;
-    };
-    maxWidth: {
-      value: string;
-      unit: string;
-    };
-    minWidth: {
-      value: string;
-      unit: string;
-    };
+    height: PositionUnit;
+    width: PositionUnit;
+    maxHeight: PositionUnit;
+    minHeight: PositionUnit;
+    maxWidth: PositionUnit;
+    minWidth: PositionUnit;
     flexGrow: number;
     flexShrink: number;
     deg: number;
     opacity: number;
     //TODO Padding margin border
   };
+
+  export type Combination = Flex | Basic;
 }
 
-type FormValidatorType = 'system' | 'custom';
-
-type FormConfig = {
-  name: string;
-  verifyEnable?: boolean;
-  rules: {
-    type: FormValidatorType;
-    message: string;
-    system: string;
-    custom: CFunction.Value;
+type WatermarkType = {
+  show: boolean;
+  content: string;
+  textStyle: {
+    width: number;
+    height: number;
+    color: string;
+    fontSize: number;
+    rotate: number;
   };
 };
+export namespace PanelConfig {
+  type Default = {
+    backgroundImage: string | null;
+    backgroundColor: string | null;
+    height: {
+      value: number;
+      unit: string;
+    };
+  };
 
-type ComConfigType<
-  Basic extends BasicConfig.Basic = BasicConfig.Basic,
-  Attr extends Record<string, any> = Record<string, any>,
-  Data extends DataConfig.Config = DataConfig.Config,
-> = {
-  basic: Basic;
-  form?: FormConfig | null;
-} & SubcomConfigType<Attr, Data>;
+  export type PageInfo = {
+    id: string;
+    name: string;
+    watermark: WatermarkType;
+  } & Default;
 
-type SubcomConfigType<
-  Attr extends Record<string, any> = Record<string, any>,
-  Data extends DataConfig.Config = DataConfig.Config,
-> = {
-  attr?: Attr;
-  data?: Data;
-  com: ComIdentifier;
-};
+  export type CanvasModule = {} & Default;
+}
 
-type SubpanelConfigType<> = {};
+namespace FormConfig {
+  type ValidatorType = 'system' | 'custom';
+
+  export type ConfigValue = {
+    name: string;
+    verifyEnable?: boolean;
+    rules: {
+      type: ValidatorType;
+      message: string;
+      system: string;
+      custom: CFunction.Value;
+    };
+  };
+}
+
+export namespace NodeConfigs {
+  export type DefaultNode = {
+    top: number;
+    left: number;
+    disable: boolean;
+  };
+  export type ComNode = {
+    type: Omit<ComItemType, 'logical'>;
+  } & DefaultNode;
+
+  export type LogicalNode<T extends Record<string, any> = Record<string, any>> = {
+    cn_name: string;
+    com: ComIdentifier;
+    type: 'logical';
+    config: T;
+  } & DefaultNode;
+}
+
+export namespace ComConfigs {
+  type Default = {
+    id: string;
+    cn_name: string;
+  };
+
+  export type Com<
+    Attr extends Record<string, any> = Record<string, any>,
+    Data extends DataConfig.ConfigValue = DataConfig.ConfigValue,
+  > = {
+    form?: FormConfig.ConfigValue | null;
+    type: 'com';
+  } & Subcom<Attr, Data> &
+    Default;
+
+  export type Subcom<
+    Attr extends Record<string, any> = Record<string, any>,
+    Data extends DataConfig.ConfigValue = DataConfig.ConfigValue,
+  > = {
+    attr: Attr;
+    data?: Data;
+    com: ComIdentifier;
+    nodeExport: boolean;
+    type: 'subcom';
+  } & Default;
+
+  export type Group = {
+    type: 'group';
+  } & Default;
+
+  export type CanvasModule = {
+    type: 'module';
+    attr: PanelConfig.CanvasModule;
+    dataControlled?: boolean;
+    controlType?: 'form';
+  } & Default;
+
+  export type Configs = Com | Subcom | Group | CanvasModule;
+}
