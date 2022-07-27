@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import './App.css';
 import LayerPanel from './components/layer-panel';
 import EditorPanel from './components/editor-panel';
-import layerConfig from './mock';
+import layerConfig, { components, basics } from './mock';
 import produce from 'immer';
 import type { LayerConfig } from './types';
+import { MetaContext } from './context';
 
 function walkAlongPath<T extends { children?: T[] }>(path: number[], tree: T) {
   return path.reduce<T>((last, val) => last.children![val], tree);
@@ -67,10 +68,19 @@ function App() {
     setLayer(filtered);
   };
 
+  const ctx = useMemo(() => {
+    return {
+      components,
+      basics,
+    };
+  }, []);
+
   return (
     <div className="App" style={{ height: '100vh' }}>
-      <LayerPanel layerConfig={layer} sortLayer={sortLayer} />
-      <EditorPanel layerConfig={layer} breakPoint={500} />
+      <MetaContext.Provider value={ctx}>
+        <LayerPanel layerConfig={layer} sortLayer={sortLayer} />
+        <EditorPanel layerConfig={layer} breakPoint={500} />
+      </MetaContext.Provider>
     </div>
   );
 }

@@ -28,6 +28,7 @@ class DraggableSort extends Component<LayerItemProps> {
   };
 
   dragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
     const { chain, flattenIndex } = this.props;
     e.dataTransfer.dropEffect = 'move';
     this.props.setDragSort({ chain, index: flattenIndex });

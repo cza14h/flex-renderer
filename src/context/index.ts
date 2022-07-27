@@ -1,11 +1,12 @@
 import { createContext } from 'react';
+import { ModuleBasic } from '@app/types';
 
-type BranchContextType = {
-  expanded: Record<string, string>;
-  toggleExpand: (id: string) => void;
+export type MetaContextType = {
+  components: ModuleBasic['components'];
+  basics: ModuleBasic['basics'];
 };
 
-export const BranchContext = createContext<BranchContextType>({
-  expanded: {},
-  toggleExpand() {},
+export const MetaContext = createContext<MetaContextType>({
+  components: {},
+  basics: { default: {} },
 });

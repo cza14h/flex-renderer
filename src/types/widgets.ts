@@ -27,8 +27,3 @@ export namespace CSuite {
     };
   };
 }
-
-export type PositionUnit = {
-  value: number | null;
-  unit: string;
-};

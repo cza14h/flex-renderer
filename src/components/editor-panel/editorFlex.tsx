@@ -1,22 +1,88 @@
-import React, { Component, ReactNode } from 'react';
+import React, { Component, CSSProperties, ReactNode } from 'react';
+import { MetaContext, MetaContextType } from '@app/context';
 import type { BasicConfig } from '@app/types';
 
-type Basic = BasicConfig.Basic;
-type Flex = BasicConfig.Flex;
+function getBoxStyle(basic: BasicConfig.Basic): CSSProperties {
+  const { opacity, deg, ...sizes } = basic;
 
-function genContainerStyle(basic: Basic) {}
+  return {
+    ...Object.fromEntries(Object.entries(sizes).filter((entry) => entry[1] !== null)),
+    opacity: opacity,
+    transform: `rotate(${deg}deg)`,
+  };
+}
 
-type FlexBoxProps<T extends Basic = Basic> = {
-  // basic
-  children?: ReactNode;
+function getFlexStyle(basic: BasicConfig.Flex): CSSProperties {
+  const { flexDirection, alignItems, justifyContent, flexWrap, ...other } = basic;
+  return {
+    display: 'flex',
+    flexDirection,
+    alignItems,
+    justifyContent,
+    flexWrap,
+    ...getBoxStyle(other),
+  };
+}
+
+type FlexBoxProps = {
+  id: string;
+  chain: string;
+  canDrag?: boolean;
 };
 
-class FlexBox extends Component<FlexBoxProps> {
-  render(): React.ReactNode {
-    return <div>{this.props.children}</div>;
+abstract class FlexBox<T extends FlexBoxProps, S = {}> extends Component<T, S> {
+  static contextType = MetaContext;
+  static defaultProps = { canDrag: true };
+  // declare context: MetaContextType;
+  context!: MetaContextType;
+  className = 'com';
+  onDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    console.log(this.props.id);
+  };
+
+  get basic() {
+    //TODO responsive to the breakpoint id
+    return this.context.basics.default[this.props.id];
   }
 }
 
-export class GroupContainer extends FlexBox {}
+type GroupContainerProps = {
+  children: ReactNode[];
+} & FlexBoxProps;
 
-export class NormalContainer extends FlexBox {}
+type GroupContainerState = {
+  children: ReactNode[];
+};
+export class GroupContainer extends FlexBox<GroupContainerProps, GroupContainerState> {
+  state: GroupContainerState = { children: [] };
+  onDragOver = (e: React.DragEvent) => {};
+  render() {
+    const props = {
+      onDragStartCapture: this.onDragStart,
+      onDragOverCpature: this.onDragOver,
+      style: getFlexStyle(this.basic as BasicConfig.Flex),
+      draggable: this.props.canDrag,
+    };
+    return (
+      <div className="flex" {...props}>
+        {React.Children.map(this.props.children, (node) => {
+          return React.cloneElement(node as any, { canDrag: false });
+        })}
+      </div>
+    );
+  }
+}
+
+export class NormalContainer extends FlexBox<FlexBoxProps> {
+  render(): React.ReactNode {
+    const props = {
+      onDragStartCapture: this.onDragStart,
+      style: getBoxStyle(this.basic),
+      draggable: this.props.canDrag,
+    };
+
+    return <div className="com" {...props}></div>;
+  }
+}

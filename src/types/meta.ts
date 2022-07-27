@@ -22,7 +22,7 @@ type BreakpointsValue =
     }
   | { id: 'default'; lower: 0 };
 
-type ModuleBasic = {
+export type ModuleBasic = {
   components: Record<string, ComConfigs.Configs>;
   breakpoints: BreakpointsValue[];
   basics: {
@@ -33,7 +33,7 @@ type ModuleBasic = {
   filters: Record<string, FilterType>;
 };
 
-type PageMeta = {
+export type PageMeta = {
   pageInfo: PanelConfig.PageInfo;
 } & ModuleBasic;
 

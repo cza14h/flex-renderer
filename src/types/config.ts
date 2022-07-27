@@ -1,4 +1,4 @@
-import { CFunction, PositionUnit } from './widgets';
+import { CFunction } from './widgets';
 
 export type ComItemType = 'com' | 'group' | 'subcom' | 'logical' | 'module';
 
@@ -17,7 +17,10 @@ export namespace LayerConfig {
     type: ComItemType;
   };
   export type ItemList = LayerItem[];
-  export type LayerList = ItemList[];
+  export type LayerList = {
+    name: string;
+    layer: ItemList;
+  }[];
 }
 
 /** Configs Inside the dashboardComponents */
@@ -73,12 +76,14 @@ export namespace DataConfig {
   export type ConfigValue<T = SourceConfigType> = {
     [sourceName: string]: T;
   };
+
+  export type ConfigValueRuntime = Record<string, SourceConfigRuntime>;
 }
 
 export namespace BasicConfig {
   export type Flex = {
-    direction: 'column' | 'row' | 'row-reverse' | 'column-reverse';
-    wrap: 'nowrap' | 'wrap' | 'wrap-reverse';
+    flexDirection: 'column' | 'row' | 'row-reverse' | 'column-reverse';
+    flexWrap: 'nowrap' | 'wrap' | 'wrap-reverse';
     alignItems: 'normal' | 'center' | 'flex-start' | 'flex-end';
     justifyContent:
       | 'normal'
@@ -91,12 +96,12 @@ export namespace BasicConfig {
   } & Basic;
 
   export type Basic = {
-    height: PositionUnit;
-    width: PositionUnit;
-    maxHeight: PositionUnit;
-    minHeight: PositionUnit;
-    maxWidth: PositionUnit;
-    minWidth: PositionUnit;
+    height: string | null;
+    width: string | null;
+    maxHeight: string | null;
+    minHeight: string | null;
+    maxWidth: string | null;
+    minWidth: string | null;
     flexGrow: number;
     flexShrink: number;
     deg: number;
@@ -174,31 +179,58 @@ export namespace ComConfigs {
   type Default = {
     id: string;
     cn_name: string;
+    hide?: boolean;
   };
 
-  export type Com<
-    Attr extends Record<string, any> = Record<string, any>,
-    Data extends DataConfig.ConfigValue = DataConfig.ConfigValue,
-  > = {
-    form?: FormConfig.ConfigValue | null;
-    type: 'com';
-  } & Subcom<Attr, Data> &
-    Default;
+  type DefaultAttr = Record<string, any>;
+  type Basic<T extends BasicConfig.Basic = BasicConfig.Basic> = {
+    basic: T;
+  };
 
-  export type Subcom<
-    Attr extends Record<string, any> = Record<string, any>,
+  type ComBasic<
+    Attr extends DefaultAttr = DefaultAttr,
     Data extends DataConfig.ConfigValue = DataConfig.ConfigValue,
   > = {
     attr: Attr;
     data?: Data;
-    com: ComIdentifier;
-    nodeExport: boolean;
+    // disable for test
+    // com: ComIdentifier;
+    // nodeExport: boolean;
+  };
+
+  export type Com<
+    Attr extends DefaultAttr = DefaultAttr,
+    Data extends DataConfig.ConfigValue = DataConfig.ConfigValue,
+  > = {
+    form?: FormConfig.ConfigValue | null;
+    type: 'com';
+  } & ComBasic<Attr, Data> &
+    Default;
+
+  export type ComRuntime<Attr extends DefaultAttr = DefaultAttr> = Com<
+    Attr,
+    DataConfig.ConfigValueRuntime
+  > &
+    Basic;
+
+  export type Subcom<
+    Attr extends DefaultAttr = DefaultAttr,
+    Data extends DataConfig.ConfigValue = DataConfig.ConfigValue,
+  > = {
     type: 'subcom';
-  } & Default;
+  } & ComBasic<Attr, Data> &
+    Default;
+
+  export type SubcomRuntime<Attr extends DefaultAttr = DefaultAttr> = Subcom<
+    Attr,
+    DataConfig.ConfigValueRuntime
+  >;
 
   export type Group = {
     type: 'group';
   } & Default;
+
+  export type GroupRuntime = Group & Basic<BasicConfig.Flex>;
 
   export type CanvasModule = {
     type: 'module';
@@ -207,5 +239,9 @@ export namespace ComConfigs {
     controlType?: 'form';
   } & Default;
 
+  export type CanvasModuleRuntime = CanvasModule & Basic;
+
   export type Configs = Com | Subcom | Group | CanvasModule;
+
+  export type ConfigsRuntime = ComRuntime | SubcomRuntime | GroupRuntime | CanvasModuleRuntime;
 }
