@@ -1,7 +1,7 @@
 import { LayerConfig } from '@app/types';
 import React, { Component, ReactNode } from 'react';
 import styles from './index.module.scss';
-import { GroupContainer, NormalContainer } from './editorFlex';
+import { FlexContainer, NormalContainer } from './editorFlex';
 import { preventDefault } from '@app/utils';
 
 type EditorPanelProps = {
@@ -14,7 +14,7 @@ function render(layer: LayerConfig.ItemList, chain = '') {
     const currentChain = `${chain}${index}`;
     const props = { key: id, id, chain: currentChain };
     if (type === 'group') {
-      last.push(<GroupContainer {...props}>{render(children!, currentChain)}</GroupContainer>);
+      last.push(<FlexContainer {...props}>{render(children!, currentChain)}</FlexContainer>);
     } else {
       last.push(<NormalContainer {...props} />);
     }
