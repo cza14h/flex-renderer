@@ -28,7 +28,7 @@ function getFlexStyle(basic: BasicConfig.Flex): CSSProperties {
 }
 
 interface ReportHoverType {
-  (chain: string, cursorOffset: CursorOffset): void;
+  (chain: string, cursorOffset: CursorOffset): string | null;
   (chain: null): void;
 }
 
@@ -56,22 +56,22 @@ abstract class Box<T extends BoxProps, S extends BoxState = BoxState> extends Co
   reportParent = (e: React.DragEvent) => {
     e.stopPropagation();
     const offset = cursorOffset(e);
-    this.props.reportHover?.(this.props.chain, offset);
+    return this.props.reportHover?.(this.props.chain, offset) ?? this.props.chain;
   };
 
   onDragStart = (e: React.DragEvent) => {
     if (!this.props.canDrag) return;
-    this.reportParent(e);
+    const chain = this.reportParent(e);
     this.setState({ hide: true });
     this.props.dragSort.setInitiator({
-      chain: this.props.chain,
+      chain: chain,
       id: this.props.id,
     });
   };
 
   onDragOver(e: React.DragEvent) {
     const { dragSort, chain, id } = this.props;
-    // console.log(chain, id);
+    console.log(chain, id);
     if (!dragSort.getInitiator()) return;
     dragSort.setTarget({ chain, id });
     this.reportParent(e);
@@ -80,7 +80,7 @@ abstract class Box<T extends BoxProps, S extends BoxState = BoxState> extends Co
   onDragEnd = (e: React.DragEvent) => {
     const { dragSort, chain } = this.props;
     const target = dragSort.getTarget();
-    // console.log(chain, target?.chain);
+    console.log(chain, target?.chain);
     dragSort.sortLayer([chain], target!.chain);
     // this.props.dragSort.sortLayer()
     dragSort.reset();
@@ -125,7 +125,6 @@ export class FlexContainer extends Box<FlexContainerProps, FlexContainerState> {
     if (e.currentTarget === e.target) {
       this.setState({ dummy: null });
     }
-    // this.props.reportHover?.(null);
   };
 
   reportHover: ReportHoverType = (chain: string | null, offset?: CursorOffset) => {
@@ -143,7 +142,9 @@ export class FlexContainer extends Box<FlexContainerProps, FlexContainerState> {
       if (this.state.dummy !== nextDummy) {
         this.setState({ dummy: nextDummy });
       }
+      return nextDummy;
     }
+    return null;
   };
 
   renderChildren = createMemo((dummy: string | null, children: ReactNode[]) => {
@@ -153,7 +154,7 @@ export class FlexContainer extends Box<FlexContainerProps, FlexContainerState> {
     }
     const basic = getBoxStyle(this.getBasic(target.id));
     return produce(children, (draft) => {
-      draft.splice(+dummy[dummy.length - 1], 0, <DummyContainer style={basic} />);
+      draft.splice(+dummy[dummy.length - 1], 0, <DummyContainer key="dummy" style={basic} />);
     });
   });
 
