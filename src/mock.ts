@@ -48,6 +48,7 @@ const treeLayer: LayerConfig.ItemList = [
       },
     ],
   },
+  { id: '3', type: 'com' },
 ];
 
 export default treeLayer;
@@ -101,6 +102,12 @@ export const components: ModuleBasic['components'] = {
   },
   '2-2': {
     id: '2-2',
+    cn_name: '盒子',
+    type: 'com',
+    attr: {},
+  },
+  '3': {
+    id: '3',
     cn_name: '盒子',
     type: 'com',
     attr: {},
@@ -216,6 +223,18 @@ export const basics = {
       opacity: 1,
     },
     '2-2': {
+      minWidth: null,
+      minHeight: '50px',
+      height: null,
+      width: null,
+      maxHeight: null,
+      maxWidth: null,
+      flexGrow: 1,
+      flexShrink: 1,
+      deg: 0,
+      opacity: 1,
+    },
+    '3': {
       minWidth: null,
       minHeight: '50px',
       height: null,

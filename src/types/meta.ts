@@ -22,12 +22,13 @@ type BreakpointsValue =
     }
   | { id: 'default'; lower: 0 };
 
+type MetaBasicConfig = Record<string, BasicConfig.Combination>;
 export type ModuleBasic = {
   components: Record<string, ComConfigs.Configs>;
   breakpoints: BreakpointsValue[];
   basics: {
-    default: Record<string, BasicConfig.Combination>;
-  } & Record<string, Record<string, BasicConfig.Combination>>;
+    default: MetaBasicConfig;
+  } & Record<string, MetaBasicConfig>;
   layers: LayerConfig.LayerList;
   interaction: InteractionConfig;
   filters: Record<string, FilterType>;

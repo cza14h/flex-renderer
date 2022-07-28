@@ -85,7 +85,7 @@ class LayerPanel extends Component<LayerPanelProps, LayerPanelState> {
 
   reportHover: ReportHoverType = (e, payload, expanded, type) => {
     const { clientY, currentTarget } = e;
-    if (!currentTarget) return;
+    // if (!currentTarget) return;
     const { top, height } = currentTarget.getBoundingClientRect();
     let { chain, index } = payload;
     let res = chain.split('');
