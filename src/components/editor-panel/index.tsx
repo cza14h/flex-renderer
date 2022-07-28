@@ -49,7 +49,7 @@ export class DragSortRW {
 }
 
 class EditorPanel extends Component<EditorPanelProps> {
-  dragSort = new DragSortRW(this.props.sortLayer);
+  dragSort = new DragSortRW((from: string[], to: string) => this.props.sortLayer(from, to));
 
   render(): React.ReactNode {
     const { breakPoint } = this.props;

@@ -71,6 +71,7 @@ abstract class Box<T extends BoxProps, S extends BoxState = BoxState> extends Co
 
   onDragOver(e: React.DragEvent) {
     const { dragSort, chain, id } = this.props;
+    // console.log(chain, id);
     if (!dragSort.getInitiator()) return;
     dragSort.setTarget({ chain, id });
     this.reportParent(e);
@@ -79,6 +80,7 @@ abstract class Box<T extends BoxProps, S extends BoxState = BoxState> extends Co
   onDragEnd = (e: React.DragEvent) => {
     const { dragSort, chain } = this.props;
     const target = dragSort.getTarget();
+    // console.log(chain, target?.chain);
     dragSort.sortLayer([chain], target!.chain);
     // this.props.dragSort.sortLayer()
     dragSort.reset();
@@ -111,6 +113,7 @@ export class FlexContainer extends Box<FlexContainerProps, FlexContainerState> {
   onDragOver = (e: React.DragEvent) => {
     if (!this.props.dragSort.getInitiator()) return;
     const isInside = isThreeQuarterBoundary(e);
+    // console.log(isInside);
     if (isInside) {
       this.props.reportHover?.(null);
     } else {
@@ -118,9 +121,10 @@ export class FlexContainer extends Box<FlexContainerProps, FlexContainerState> {
     }
   };
 
-  onDragLeave = () => {
-    // console.log(233);
-    // this.setState({ dummy: null });
+  onDragLeave = (e: React.DragEvent) => {
+    if (e.currentTarget === e.target) {
+      this.setState({ dummy: null });
+    }
     // this.props.reportHover?.(null);
   };
 
