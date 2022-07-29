@@ -1,29 +1,14 @@
 import { LayerConfig } from '@app/types';
-import React, { Component, ReactNode } from 'react';
+import React, { Component } from 'react';
 import styles from './index.module.scss';
-import { FlexContainer, NormalContainer } from './editorFlex';
 import { preventDefault } from '@app/utils';
+import EditorRenderer from './draggable';
 
 type EditorPanelProps = {
   breakPoint: number;
   layerConfig: LayerConfig.ItemList;
   sortLayer(from: string[], to: string): void;
 };
-
-function render(layer: LayerConfig.ItemList, dragSort: DragSortRW, chain = '') {
-  return layer.reduce<ReactNode[]>((last, { type, id, children }, index) => {
-    const currentChain = `${chain}${index}`;
-    const props = { key: id, id, chain: currentChain, dragSort };
-    if (type === 'group') {
-      last.push(
-        <FlexContainer {...props}>{render(children!, dragSort, currentChain)}</FlexContainer>,
-      );
-    } else {
-      last.push(<NormalContainer {...props} />);
-    }
-    return last;
-  }, []);
-}
 
 type MemberIdentifier = {
   chain: string;
@@ -56,7 +41,7 @@ class EditorPanel extends Component<EditorPanelProps> {
     return (
       <div className={styles['editor-panel']} onDragOver={preventDefault}>
         <div className="dashboard" style={{ width: breakPoint }}>
-          <>{render(this.props.layerConfig, this.dragSort)}</>
+          <EditorRenderer layers={this.props.layerConfig} dragSort={this.dragSort} />
         </div>
       </div>
     );

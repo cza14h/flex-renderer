@@ -1,10 +1,10 @@
 import React, { Component, ReactNode, CSSProperties } from 'react';
 import { MetaContext, MetaContextType } from '@app/context';
-import { cursorOffset, CursorOffset, isThreeQuarterBoundary } from '@app/utils/boundary';
+import { cursorOffset, CursorOffset, isInsideBoundary } from '@app/utils/boundary';
 import { getBoxStyle, getFlexStyle, DIR_MAP } from './utils';
-import type { DragSortRW } from '.';
-import { BasicConfig, LayerConfig } from '@app/types';
 import { createMemo, preventDefault } from '@app/utils';
+import type { DragSortRW } from '.';
+import type { BasicConfig, LayerConfig } from '@app/types';
 
 function onDragOver(this: Box, e: React.DragEvent) {
   const { dragSort, id } = this.props;
@@ -26,9 +26,7 @@ type BoxProps = {
   dragSort: DragSortRW;
   onChildDragOver?: OnChildHoverType;
 };
-type BoxState = {
-  hide: boolean;
-};
+type BoxState = {};
 
 class Box<
   P extends BoxProps = BoxProps,
@@ -44,7 +42,6 @@ class Box<
     super(props);
     this.callbacks = {
       onDragStartCapture: this.onDragStart,
-      onDragOverCapture: this.onDragOver,
       onDragEnd: this.onDragEnd,
       onDrop: preventDefault,
     };
@@ -58,7 +55,17 @@ class Box<
 
   onDragStart = (e: React.DragEvent) => {
     // if (!this.props.dragEnable) return;
-    this.setState({ hide: true });
+    // e.dataTransfer.effectAllowed = 'copy';
+    setTimeout(() => {
+      //@ts-ignore
+      e.target.style.display = 'none';
+    }, 0);
+    this.props.onChildDragOver?.(this.props.chain, {
+      left: false,
+      top: false,
+      bottom: false,
+      right: false,
+    });
     this.props.dragSort.setInitiator({
       chain: this.props.chain,
       id: this.props.id,
@@ -77,7 +84,9 @@ class Box<
     }
     // console.log(chain, target?.chain);
     dragSort.reset();
-    this.setState({ hide: false });
+    //@ts-ignore
+    e.target.style.display = '';
+
     this.props.onChildDragOver?.(null);
   };
 
@@ -91,12 +100,12 @@ type FlexProps = EditorRendererProps & BoxProps;
 type FlexState = EditorRendererState & BoxState;
 
 class Flex extends Box<FlexProps, FlexState, BasicConfig.Flex> {
-  state: FlexState = { hide: false, ghost: null };
+  state: FlexState = { ghost: null };
   onDragOver = (e: React.DragEvent) => {
     if (!this.props.dragSort.getInitiator()) return;
     const row = (this.getBasic() as BasicConfig.Flex).flexDirection.startsWith('row');
-    const isInside = isThreeQuarterBoundary(e, row);
-    // console.log(isInside);
+    const isInside = isInsideBoundary(e, row);
+    console.log(isInside);
     if (isInside) {
       this.props.onChildDragOver?.(null);
     } else {
@@ -110,9 +119,9 @@ class Flex extends Box<FlexProps, FlexState, BasicConfig.Flex> {
     }
   };
 
-  diplayGhost: OnChildHoverType = (chain: string | null, offset?: CursorOffset) => {
+  showGhost: OnChildHoverType = (chain: string | null, offset?: CursorOffset) => {
     if (chain === null && this.state.ghost !== null) {
-      console.log('23333');
+      // console.log('23333');
       this.setState({ ghost: null });
     } else if (chain !== null) {
       const { flexDirection } = this.getBasic();
@@ -130,7 +139,7 @@ class Flex extends Box<FlexProps, FlexState, BasicConfig.Flex> {
   };
 
   renderChildren = createMemo(
-    (dummy: string | null, children: LayerConfig.ItemList, chain: string) => {
+    (ghost: string | null, children: LayerConfig.ItemList, chain: string) => {
       const target = this.props.dragSort.getTarget();
       const res = children.map(({ type, children, id }, index) => {
         const props = {
@@ -138,7 +147,7 @@ class Flex extends Box<FlexProps, FlexState, BasicConfig.Flex> {
           id,
           chain: `${chain}${index}`,
           dragSort: this.props.dragSort,
-          onChildDragOver: this.diplayGhost,
+          onChildDragOver: this.showGhost,
         };
         if (type === 'group') {
           return <Flex {...props} layers={children!} />;
@@ -147,22 +156,22 @@ class Flex extends Box<FlexProps, FlexState, BasicConfig.Flex> {
         }
       });
 
-      if (!dummy || !target) {
-        return res;
+      if (ghost && target) {
+        const basic = getBoxStyle(this.getBasic(target.id));
+        res.splice(+ghost[ghost.length - 1], 0, <DummyContainer key="dummy" style={basic} />);
       }
-      const basic = getBoxStyle(this.getBasic(target.id));
-      res.splice(+dummy[dummy.length - 1], 0, <DummyContainer key="dummy" style={basic} />);
+      return res;
     },
   );
 
   render() {
-    const { ghost: dummy, hide } = this.state;
     const { layers: childList, chain } = this.props;
-    const children = this.renderChildren(dummy, childList, chain);
+    const children = this.renderChildren(this.state.ghost, childList, chain);
     return (
       <div
-        className={`flex ${hide ? 'hide' : ''}`}
+        className="flex"
         {...this.callbacks}
+        onDragOverCapture={this.onDragOver}
         style={getFlexStyle(this.getBasic())}
         onDragLeaveCapture={this.onDragLeave}
       >
@@ -182,12 +191,13 @@ class Normal extends Box<NormalProps> {
   };
 
   render() {
-    const { hide } = this.state;
     return (
       <div
-        className={`com ${hide ? 'hide' : ''}`}
+        draggable
+        className="com"
         style={getBoxStyle(this.getBasic())}
         {...this.callbacks}
+        onDragOverCapture={this.onDragOver}
       >
         {this.props.children}
       </div>
@@ -210,6 +220,7 @@ function DummyContainer({ style, childrenStyle }: DummyContainerProps) {
 
 type EditorRendererProps = {
   layers: LayerConfig.ItemList;
+  dragSort: DragSortRW;
 };
 
 type EditorRendererState = {
@@ -217,9 +228,13 @@ type EditorRendererState = {
 };
 
 class EditorRenderer extends Component<EditorRendererProps, EditorRendererState> {
-  diplayGhost: OnChildHoverType = (chain: string | null, offset?: CursorOffset) => {
+  static contextType = MetaContext;
+  context!: MetaContextType;
+  state: EditorRendererState = { ghost: null };
+
+  showGhost: OnChildHoverType = (chain: string | null, offset?: CursorOffset) => {
     if (chain === null && this.state.ghost !== null) {
-      console.log('23333');
+      // console.log('23333');
       this.setState({ ghost: null });
     } else if (chain !== null) {
       const chainArr = chain.split('').map(Number);
@@ -234,4 +249,45 @@ class EditorRenderer extends Component<EditorRendererProps, EditorRendererState>
     }
     return null;
   };
+
+  renderChildren = createMemo(
+    (dummy: string | null, children: LayerConfig.ItemList, chain: string) => {
+      const target = this.props.dragSort.getTarget();
+      const res = children.map(({ type, children, id }, index) => {
+        const props = {
+          key: id,
+          id,
+          chain: `${chain}${index}`,
+          dragSort: this.props.dragSort,
+          onChildDragOver: this.showGhost,
+        };
+        if (type === 'group') {
+          return <Flex {...props} layers={children!} />;
+        } else {
+          return <Normal {...props} />;
+        }
+      });
+
+      if (dummy && target) {
+        const basic = getBoxStyle(this.getBasic(target.id));
+        res.splice(+dummy[dummy.length - 1], 0, <DummyContainer key="dummy" style={basic} />);
+      }
+
+      return res;
+    },
+  );
+
+  getBasic(id: string) {
+    const { basics, breakpoint } = this.context;
+    return basics[breakpoint]?.[id] ?? basics.default[id];
+  }
+
+  render() {
+    const { ghost } = this.state;
+    const { layers } = this.props;
+    const children = this.renderChildren(ghost, layers, '');
+    return <>{children}</>;
+  }
 }
+
+export default EditorRenderer;
