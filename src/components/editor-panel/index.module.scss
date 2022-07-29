@@ -17,15 +17,21 @@
       transition: flex 0.3s linear;
       display: flex;
       border: 1px solid red;
+      &.hide {
+        display: none;
+      }
     }
 
     .com {
-      transition: flex-grow 0.3s linear;
+      transition: flex 0.3s linear;
       border: 1px solid blue;
       // box-shadow: 1px 1px 1px blue;
+      &.hide {
+        display: none;
+      }
     }
     .dummy {
-      transition: flex-grow 0.3s linear;
+      transition: flex 0.3s linear;
       background: #f40;
     }
   }

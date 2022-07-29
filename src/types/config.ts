@@ -234,7 +234,7 @@ export namespace ComConfigs {
 
   export type CanvasModule = {
     type: 'module';
-    attr: PanelConfig.CanvasModule;
+    // attr: PanelConfig.CanvasModule;
     dataControlled?: boolean;
     controlType?: 'form';
   } & Default;

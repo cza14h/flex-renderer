@@ -1,31 +1,11 @@
 import React, { Component, createRef, CSSProperties, ReactNode } from 'react';
 import { MetaContext, MetaContextType } from '@app/context';
-import type { BasicConfig } from '@app/types';
-import type { DragSortRW } from '.';
 import { cursorOffset, CursorOffset, isThreeQuarterBoundary } from '@app/utils/boundary';
 import { createMemo, preventDefault } from '@app/utils';
 import produce from 'immer';
-
-function getBoxStyle(basic: BasicConfig.Basic): CSSProperties {
-  const { opacity, deg, ...sizes } = basic;
-
-  return {
-    ...Object.fromEntries(Object.entries(sizes).filter((entry) => entry[1] !== null)),
-    opacity: opacity,
-    transform: `rotate(${deg}deg)`,
-  };
-}
-
-function getFlexStyle(basic: BasicConfig.Flex): CSSProperties {
-  const { flexDirection, alignItems, justifyContent, flexWrap, ...other } = basic;
-  return {
-    flexDirection,
-    alignItems,
-    justifyContent,
-    flexWrap,
-    ...getBoxStyle(other),
-  };
-}
+import { getBoxStyle, getFlexStyle, DIR_MAP } from './utils';
+import type { BasicConfig } from '@app/types';
+import type { DragSortRW } from '.';
 
 interface ReportHoverType {
   (chain: string, cursorOffset: CursorOffset): string | null;
@@ -51,7 +31,6 @@ abstract class Box<T extends BoxProps, S extends BoxState = BoxState> extends Co
   static defaultProps = { canDrag: true };
   // declare context: MetaContextType;
   context!: MetaContextType;
-  ref = createRef<HTMLDivElement>();
 
   reportParent = (e: React.DragEvent) => {
     e.stopPropagation();
@@ -61,26 +40,25 @@ abstract class Box<T extends BoxProps, S extends BoxState = BoxState> extends Co
 
   onDragStart = (e: React.DragEvent) => {
     if (!this.props.canDrag) return;
-    const chain = this.reportParent(e);
     this.setState({ hide: true });
     this.props.dragSort.setInitiator({
-      chain: chain,
+      chain: this.props.chain,
       id: this.props.id,
     });
   };
 
   onDragOver(e: React.DragEvent) {
-    const { dragSort, chain, id } = this.props;
-    console.log(chain, id);
+    const { dragSort, id } = this.props;
+    // console.log(chain, id);
     if (!dragSort.getInitiator()) return;
+    const chain = this.reportParent(e);
     dragSort.setTarget({ chain, id });
-    this.reportParent(e);
   }
 
   onDragEnd = (e: React.DragEvent) => {
     const { dragSort, chain } = this.props;
     const target = dragSort.getTarget();
-    console.log(chain, target?.chain);
+    // console.log(chain, target?.chain);
     dragSort.sortLayer([chain], target!.chain);
     // this.props.dragSort.sortLayer()
     dragSort.reset();
@@ -92,13 +70,6 @@ abstract class Box<T extends BoxProps, S extends BoxState = BoxState> extends Co
     return basics[breakpoint]?.[id] ?? basics.default[id];
   }
 }
-
-const DIR_MAP = {
-  column: 'bottom',
-  'column-reverse': 'top',
-  row: 'right',
-  'row-reverse': 'left',
-} as const;
 
 type FlexContainerProps = {
   children: ReactNode[];
@@ -112,7 +83,8 @@ export class FlexContainer extends Box<FlexContainerProps, FlexContainerState> {
 
   onDragOver = (e: React.DragEvent) => {
     if (!this.props.dragSort.getInitiator()) return;
-    const isInside = isThreeQuarterBoundary(e);
+    const row = (this.getBasic() as BasicConfig.Flex).flexDirection.startsWith('row');
+    const isInside = isThreeQuarterBoundary(e, row);
     // console.log(isInside);
     if (isInside) {
       this.props.reportHover?.(null);
@@ -138,7 +110,6 @@ export class FlexContainer extends Box<FlexContainerProps, FlexContainerState> {
         chainArr[chainArr.length - 1] += 1;
       }
       const nextDummy = chainArr.join('');
-      // console.log('origin', chain, 'computed', nextDummy, 'offset', offset);
       if (this.state.dummy !== nextDummy) {
         this.setState({ dummy: nextDummy });
       }
@@ -152,7 +123,8 @@ export class FlexContainer extends Box<FlexContainerProps, FlexContainerState> {
     if (!dummy || !target) {
       return children;
     }
-    const basic = getBoxStyle(this.getBasic(target.id));
+    const basic = getBoxStyle(this.getBasic(this.props.dragSort.getInitiator()?.id));
+    console.log(basic, target.id);
     return produce(children, (draft) => {
       draft.splice(+dummy[dummy.length - 1], 0, <DummyContainer key="dummy" style={basic} />);
     });
@@ -162,7 +134,6 @@ export class FlexContainer extends Box<FlexContainerProps, FlexContainerState> {
     const children = this.renderChildren(this.state.dummy, this.props.children);
     return (
       <div
-        ref={this.ref}
         className="flex"
         onDragStartCapture={this.onDragStart}
         onDragOverCapture={this.onDragOver}
@@ -182,6 +153,8 @@ export class FlexContainer extends Box<FlexContainerProps, FlexContainerState> {
     );
   }
 }
+
+// export class EditorContainer extends Box<> {}
 
 export class NormalContainer extends Box<BoxProps> {
   onDragOver = (e: React.DragEvent) => {
@@ -210,7 +183,7 @@ type DummyContainerProps = {
 
 function DummyContainer({ style, childrenStyle }: DummyContainerProps) {
   return (
-    <div className="dummy" style={style}>
+    <div className="dummy" style={style} onDrop={preventDefault}>
       <div className="dummy-children" style={childrenStyle}></div>
     </div>
   );

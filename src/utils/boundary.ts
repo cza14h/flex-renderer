@@ -1,13 +1,14 @@
 import React from 'react';
 
-export function isThreeQuarterBoundary(e: React.DragEvent) {
+export function isThreeQuarterBoundary(e: React.DragEvent, row: boolean) {
   const { clientX, clientY, currentTarget } = e;
   const { top, height, left, width } = currentTarget.getBoundingClientRect();
   // console.log(top, left, width, height, clientX, clientY);
   if (clientY > top + height / 10 && clientY < top + (9 * height) / 10) {
-    if (clientX > left + width / 10 && clientX < left + (9 * width) / 10) {
-      return true;
-    }
+    return true;
+  }
+  if (clientX > left + width / 10 && clientX < left + (9 * width) / 10) {
+    return true;
   }
   return false;
 }
