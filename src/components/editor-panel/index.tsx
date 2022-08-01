@@ -1,47 +1,19 @@
-import { LayerConfig } from '@app/types';
 import React, { Component } from 'react';
 import styles from './index.module.scss';
 import { preventDefault } from '@app/utils';
 import EditorRenderer from './draggable';
-
-type EditorPanelProps = {
-  breakPoint: number;
-  layerConfig: LayerConfig.ItemList;
-  sortLayer(from: string[], to: string): void;
-};
-
-type MemberIdentifier = {
-  chain: string;
-  id: string;
-};
-
-export class DragSortRW {
-  constructor(public sortLayer: EditorPanelProps['sortLayer']) {}
-  private initiator: MemberIdentifier | null = null;
-  private target: MemberIdentifier | null = null;
-
-  reset = () => {
-    this.initiator = this.target = null;
-  };
-  getInitiator = () => this.initiator;
-  setInitiator = (initiator: MemberIdentifier) => {
-    this.initiator = initiator;
-  };
-  getTarget = () => this.target;
-  setTarget = (target: MemberIdentifier) => {
-    this.target = target;
-  };
-}
+import DragContext from './dragContext';
+import type { EditorPanelProps } from './types';
 
 class EditorPanel extends Component<EditorPanelProps> {
-  dragSort = new DragSortRW((from: string[], to: string) => this.props.sortLayer(from, to));
+  dragSort = new DragContext((from: string[], to: string) => this.props.sortLayer(from, to));
 
   render(): React.ReactNode {
     const { breakPoint } = this.props;
     return (
       <div className={styles['editor-panel']} onDragOver={preventDefault}>
         <div className="dashboard" style={{ width: breakPoint }}>
-          <EditorRenderer layers={this.props.layerConfig} dragSort={this.dragSort} />
+          <EditorRenderer layers={this.props.layerConfig} dragContext={this.dragSort} chain="" />
         </div>
       </div>
     );

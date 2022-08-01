@@ -17,14 +17,7 @@ export function isInsideBoundary(e: React.DragEvent, row: boolean) {
   return false;
 }
 
-export type CursorOffset = {
-  top: boolean;
-  left: boolean;
-  bottom: boolean;
-  right: boolean;
-};
-
-export function cursorOffset(e: React.DragEvent) {
+export function getCursorOffset(e: React.DragEvent) {
   const { clientX, clientY, currentTarget } = e;
   const { top, height, left, width } = currentTarget.getBoundingClientRect();
   const res = { top: false, bottom: false, left: false, right: false };
