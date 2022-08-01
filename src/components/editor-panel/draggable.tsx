@@ -1,13 +1,14 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import { MetaContext, MetaContextType } from '@app/context';
 import { getCursorOffset, isInsideBoundary } from '@app/utils/boundary';
 import {
   getBoxStyle,
   getFlexStyle,
   DIR_MAP,
-  onDragOver,
+  onDragOverCapture,
   EMPTY_OFFSET,
   subscribeDragEvent,
+  getSortedChildrenMiddleLine,
 } from './utils';
 import { createMemo, preventDefault } from '@app/utils';
 import type { BasicConfig, CursorOffset } from '@app/types';
@@ -22,6 +23,7 @@ import type {
   NormalProps,
 } from './types';
 import { GhostIndicator } from './GhostIndicator';
+import { binarySearch } from '@app/utils/binarySearch';
 
 export function renderChildren(
   this: Flex | EditorRenderer,
@@ -90,8 +92,8 @@ export class Box<
     });
   };
 
-  onDragOver = (e: React.DragEvent) => {
-    onDragOver.call(this, e);
+  onDragOverCapture = (e: React.DragEvent) => {
+    onDragOverCapture.call(this, e);
   };
 
   onDragEnd = (e: React.DragEvent) => {
@@ -109,18 +111,42 @@ export class Box<
 }
 
 export class Flex extends Box<FlexProps, FlexState, BasicConfig.Flex> {
+  ref = createRef<HTMLDivElement>();
   state: FlexState = { ghost: null };
-  onDragOver = (e: React.DragEvent) => {
+  onDragOverCapture = (e: React.DragEvent) => {
     if (!this.props.dragContext.getInitiator()) return;
-    const row = (this.getBasic() as BasicConfig.Flex).flexDirection.startsWith('row');
+    const row = this.getBasic().flexDirection.startsWith('row');
     const isInside = isInsideBoundary(e, row);
     if (isInside) {
       if (this.props.layers.length === 0) {
         this.props.onChildDragOver?.(null);
       }
     } else {
-      onDragOver.call(this, e);
+      onDragOverCapture.call(this, e);
     }
+  };
+
+  getSortedArr = createMemo(getSortedChildrenMiddleLine);
+
+  onDragOver = (e: React.DragEvent) => {
+    e.stopPropagation();
+    let nextGhost = '';
+    if (!this.ref.current?.childElementCount) {
+      nextGhost = this.props.chain + '0';
+    } else {
+      const sortedArr = this.getSortedArr(this.ref.current.children);
+      const { clientX, clientY } = e;
+      const { flexDirection } = this.getBasic();
+      const row = flexDirection.startsWith('row');
+      const reverse = flexDirection.endsWith('reverse');
+      const index = binarySearch(
+        ...(row ? ([sortedArr.h, clientX] as const) : ([sortedArr.v, clientY] as const)),
+      );
+      nextGhost = this.props.chain + `${reverse ? sortedArr.h.length - index : index}`;
+      if (nextGhost === this.state.ghost) return;
+    }
+    this.props.dragContext.setTarget(nextGhost);
+    this.setState({ ghost: nextGhost });
   };
 
   showGhost: OnChildHoverType = (chain: string | null, offset?: CursorOffset) => {
@@ -155,9 +181,11 @@ export class Flex extends Box<FlexProps, FlexState, BasicConfig.Flex> {
     const children = this.renderChildren(this.state.ghost, layers, chain);
     return (
       <div
+        ref={this.ref}
         className="flex"
         {...this.callbacks}
-        onDragOverCapture={this.onDragOver}
+        onDragOverCapture={this.onDragOverCapture}
+        onDragOver={this.onDragOver}
         style={getFlexStyle(this.getBasic())}
       >
         {children}
@@ -167,8 +195,8 @@ export class Flex extends Box<FlexProps, FlexState, BasicConfig.Flex> {
 }
 
 class Normal extends Box<NormalProps> {
-  onDragOver: (e: React.DragEvent<Element>) => void = (e) => {
-    onDragOver.call(this, e);
+  onDragOverCapture: (e: React.DragEvent<Element>) => void = (e) => {
+    onDragOverCapture.call(this, e);
   };
 
   render() {
@@ -178,7 +206,7 @@ class Normal extends Box<NormalProps> {
         className="com"
         style={getBoxStyle(this.getBasic())}
         {...this.callbacks}
-        onDragOverCapture={this.onDragOver}
+        onDragOverCapture={this.onDragOverCapture}
       >
         {this.props.id}
         {this.props.children}
@@ -194,7 +222,6 @@ class EditorRenderer extends Component<EditorRendererProps, EditorRendererState>
 
   showGhost: OnChildHoverType = (chain: string | null, offset?: CursorOffset) => {
     if (chain === null && this.state.ghost !== null) {
-      // console.log('23333');
       this.setState({ ghost: null });
     } else if (chain !== null) {
       const chainArr = chain.split('').map(Number);
@@ -227,10 +254,7 @@ class EditorRenderer extends Component<EditorRendererProps, EditorRendererState>
   dragOver = () => {
     const nextGhost = `${this.props.layers.length}`;
     if (nextGhost === this.state.ghost) return;
-    this.props.dragContext.setTarget({
-      chain: nextGhost,
-      id: '',
-    });
+    this.props.dragContext.setTarget(nextGhost);
     this.setState({ ghost: nextGhost });
   };
 

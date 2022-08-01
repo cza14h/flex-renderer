@@ -4,11 +4,11 @@ import type EditorRenderer from './draggable';
 import type { MemberIdentifier, SortLayerType } from './types';
 
 export default class DragContext {
-  inDragEvent = new ReplaySubject<MemberIdentifier>();
+  inDragEvent = new ReplaySubject<string>();
 
   constructor(private sortLayer: SortLayerType) {}
   private initiator: MemberIdentifier | null = null;
-  private target: MemberIdentifier | null = null;
+  private target: string | null = null;
 
   private reset = () => {
     this.initiator = this.target = null;
@@ -21,8 +21,8 @@ export default class DragContext {
     this.initiator = initiator;
   };
   getTarget = () => this.target;
-  setTarget = (target: MemberIdentifier) => {
-    if (target.chain !== this.target?.chain || target.id !== this.target.id) {
+  setTarget = (target: string) => {
+    if (target !== this.target && target !== null) {
       this.target = target;
       this.inDragEvent.next(target);
     }
@@ -32,7 +32,7 @@ export default class DragContext {
     const target = this.getTarget();
     const initiator = this.getInitiator();
     if (target && initiator) {
-      this.sortLayer([initiator?.chain], target?.chain);
+      this.sortLayer([initiator?.chain], target);
     }
     this.reset();
   };
@@ -43,9 +43,9 @@ export default class DragContext {
     };
 
     const sub$ = this.inDragEvent.subscribe({
-      next: ({ chain }: MemberIdentifier) => {
+      next: (target: string) => {
         const parentChain = _scope.props.chain;
-        if (!chain.startsWith(parentChain) || chain.length !== parentChain.length + 1) {
+        if (!target.startsWith(parentChain) || target.length !== parentChain.length + 1) {
           ref.unsubscribe(_scope);
         }
       },

@@ -8,8 +8,8 @@ export type GhostInicatorProps = {
 
 export function GhostIndicator({ style, childrenStyle }: GhostInicatorProps) {
   return (
-    <div className="dummy" style={style} onDrop={preventDefault} onDragOver={stopPropagation}>
-      <div className="dummy-children" style={childrenStyle}></div>
+    <div className="ghost" style={style} onDrop={preventDefault} onDragOver={stopPropagation}>
+      <div className="ghost-children" style={childrenStyle}></div>
     </div>
   );
 }

@@ -38,12 +38,11 @@ export const EMPTY_OFFSET = {
   right: false,
 };
 
-export function onDragOver(this: Box, e: React.DragEvent) {
-  const { dragContext: dragSort, id } = this.props;
-  // console.log(chain, id);
-  if (!dragSort.getInitiator()) return;
+export function onDragOverCapture(this: Box, e: React.DragEvent) {
+  const { dragContext } = this.props;
+  if (!dragContext.getInitiator()) return;
   const chain = this.onChildDragOver(e);
-  dragSort.setTarget({ chain, id });
+  dragContext.setTarget(chain);
 }
 
 export function subscribeDragEvent(
@@ -54,4 +53,18 @@ export function subscribeDragEvent(
   if (prevState.ghost === null && this.state.ghost !== null) {
     this.props.dragContext.subscribeDragEvent(this);
   }
+}
+
+export function getSortedChildrenMiddleLine(element: HTMLCollection) {
+  return Array.from(element).reduce<{ v: number[]; h: number[] }>(
+    (last, child) => {
+      const { top, left, width, height } = child.getBoundingClientRect();
+      if (child.className !== 'ghost') {
+        last.v.push(top + height / 2);
+        last.h.push(left + width / 2);
+      }
+      return last;
+    },
+    { v: [], h: [] },
+  );
 }
