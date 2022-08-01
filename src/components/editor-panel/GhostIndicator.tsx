@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { preventDefault } from '@app/utils';
+import { preventDefault, stopPropagation } from '@app/utils';
 
 export type GhostInicatorProps = {
   style: CSSProperties;
@@ -8,7 +8,7 @@ export type GhostInicatorProps = {
 
 export function GhostIndicator({ style, childrenStyle }: GhostInicatorProps) {
   return (
-    <div className="dummy" style={style} onDrop={preventDefault}>
+    <div className="dummy" style={style} onDrop={preventDefault} onDragOver={stopPropagation}>
       <div className="dummy-children" style={childrenStyle}></div>
     </div>
   );

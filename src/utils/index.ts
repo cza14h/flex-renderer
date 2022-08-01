@@ -13,6 +13,6 @@ export function createMemo<T extends Array<any>, S>(func: (...args: T) => S) {
 export function preventDefault(e: any) {
   e.preventDefault();
 }
-export function stop(e: any) {
+export function stopPropagation(e: any) {
   e.stopPropagation();
 }

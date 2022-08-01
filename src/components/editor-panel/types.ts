@@ -29,13 +29,14 @@ export type BoxProps = {
 };
 export type BoxState = {};
 
-export type FlexProps = EditorRendererProps & BoxProps;
+export type FlexProps = Omit<EditorRendererProps, 'breakpoint'> & BoxProps;
 export type FlexState = EditorRendererState & BoxState;
 export type NormalProps = {
   children?: ReactNode;
 } & BoxProps;
 
 export type EditorRendererProps = {
+  breakpoint: number;
   layers: LayerConfig.ItemList;
   dragContext: DragContext;
   chain: string;

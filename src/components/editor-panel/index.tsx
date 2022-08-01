@@ -12,9 +12,12 @@ class EditorPanel extends Component<EditorPanelProps> {
     const { breakPoint } = this.props;
     return (
       <div className={styles['editor-panel']} onDragOver={preventDefault}>
-        <div className="dashboard" style={{ width: breakPoint }}>
-          <EditorRenderer layers={this.props.layerConfig} dragContext={this.dragSort} chain="" />
-        </div>
+        <EditorRenderer
+          breakpoint={breakPoint}
+          layers={this.props.layerConfig}
+          dragContext={this.dragSort}
+          chain=""
+        />
       </div>
     );
   }

@@ -7,7 +7,7 @@ import {
   DIR_MAP,
   onDragOver,
   EMPTY_OFFSET,
-  componentDidUpdate,
+  subscribeDragEvent,
 } from './utils';
 import { createMemo, preventDefault } from '@app/utils';
 import type { BasicConfig, CursorOffset } from '@app/types';
@@ -30,6 +30,7 @@ export function renderChildren(
   chain: string,
 ) {
   const target = this.props.dragContext.getTarget();
+  const initiator = this.props.dragContext.getInitiator();
   const res = children.map(({ type, children, id }, index) => {
     const props = {
       key: id,
@@ -45,8 +46,8 @@ export function renderChildren(
     }
   });
 
-  if (ghost && target) {
-    const basic = getBoxStyle(this.getBasic(target.id));
+  if (ghost && target && initiator) {
+    const basic = getBoxStyle(this.getBasic(initiator.id));
     res.splice(+ghost[ghost.length - 1], 0, <GhostIndicator key="dummy" style={basic} />);
   }
   return res;
@@ -94,16 +95,10 @@ export class Box<
   };
 
   onDragEnd = (e: React.DragEvent) => {
-    const { dragContext: dragSort, chain } = this.props;
-    const target = dragSort.getTarget();
-    if (target) {
-      dragSort.sortLayer([chain], target!.chain);
-    }
-    // console.log(chain, target?.chain);
-    dragSort.reset();
+    e.preventDefault();
+    this.props.dragContext.commitSort();
     //@ts-ignore
     e.target.style.display = '';
-
     this.props.onChildDragOver?.(null);
   };
 
@@ -119,9 +114,10 @@ export class Flex extends Box<FlexProps, FlexState, BasicConfig.Flex> {
     if (!this.props.dragContext.getInitiator()) return;
     const row = (this.getBasic() as BasicConfig.Flex).flexDirection.startsWith('row');
     const isInside = isInsideBoundary(e, row);
-    console.log(isInside);
     if (isInside) {
-      this.props.onChildDragOver?.(null);
+      if (this.props.layers.length === 0) {
+        this.props.onChildDragOver?.(null);
+      }
     } else {
       onDragOver.call(this, e);
     }
@@ -151,7 +147,7 @@ export class Flex extends Box<FlexProps, FlexState, BasicConfig.Flex> {
   );
 
   componentDidUpdate(_: any, prevState: EditorRendererState) {
-    componentDidUpdate.call(this, _, prevState);
+    subscribeDragEvent.call(this, _, prevState);
   }
 
   render() {
@@ -184,6 +180,7 @@ class Normal extends Box<NormalProps> {
         {...this.callbacks}
         onDragOverCapture={this.onDragOver}
       >
+        {this.props.id}
         {this.props.children}
       </div>
     );
@@ -219,7 +216,7 @@ class EditorRenderer extends Component<EditorRendererProps, EditorRendererState>
   );
 
   componentDidUpdate(_: any, prevState: EditorRendererState) {
-    componentDidUpdate.call(this, _, prevState);
+    subscribeDragEvent.call(this, _, prevState);
   }
 
   getBasic(id: string) {
@@ -227,8 +224,27 @@ class EditorRenderer extends Component<EditorRendererProps, EditorRendererState>
     return basics[breakpoint]?.[id] ?? basics.default[id];
   }
 
+  dragOver = () => {
+    const nextGhost = `${this.props.layers.length}`;
+    if (nextGhost === this.state.ghost) return;
+    this.props.dragContext.setTarget({
+      chain: nextGhost,
+      id: '',
+    });
+    this.setState({ ghost: nextGhost });
+  };
+
   render() {
-    return <>{this.renderChildren(this.state.ghost, this.props.layers, '')}</>;
+    return (
+      <div
+        className="dashboard"
+        style={{ width: this.props.breakpoint }}
+        onDragOver={this.dragOver}
+        onDropCapture={preventDefault}
+      >
+        {this.renderChildren(this.state.ghost, this.props.layers, '')}
+      </div>
+    );
   }
 }
 

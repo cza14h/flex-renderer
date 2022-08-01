@@ -46,12 +46,12 @@ export function onDragOver(this: Box, e: React.DragEvent) {
   dragSort.setTarget({ chain, id });
 }
 
-export function componentDidUpdate(
+export function subscribeDragEvent(
   this: Flex | EditorRenderer,
   _: any,
   prevState: EditorRenderer['state'],
 ) {
-  if (this.state.ghost !== prevState.ghost && this.state.ghost !== null) {
+  if (prevState.ghost === null && this.state.ghost !== null) {
     this.props.dragContext.subscribeDragEvent(this);
   }
 }
