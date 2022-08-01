@@ -76,6 +76,7 @@ export class Box<
 
   onChildDragOver = (e: React.DragEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     const offset = getCursorOffset(e);
     return this.props.onChildDragOver?.(this.props.chain, offset) ?? this.props.chain;
   };
@@ -85,6 +86,7 @@ export class Box<
       //@ts-ignore
       e.target.style.display = 'none';
     }, 0);
+    e.dataTransfer.dropEffect = 'move';
     this.props.onChildDragOver?.(this.props.chain, EMPTY_OFFSET);
     this.props.dragContext.setInitiator({
       chain: this.props.chain,

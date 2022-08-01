@@ -6,9 +6,14 @@ export type GhostInicatorProps = {
   childrenStyle?: CSSProperties;
 };
 
+function onDragOver(e: any) {
+  preventDefault(e);
+  stopPropagation(e);
+}
+
 export function GhostIndicator({ style, childrenStyle }: GhostInicatorProps) {
   return (
-    <div className="ghost" style={style} onDrop={preventDefault} onDragOver={stopPropagation}>
+    <div className="ghost" style={style} onDrop={preventDefault} onDragOver={onDragOver}>
       <div className="ghost-children" style={childrenStyle}></div>
     </div>
   );

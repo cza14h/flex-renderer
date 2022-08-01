@@ -26,12 +26,8 @@
       transition: flex 0.3s linear;
       border: 1px solid blue;
       // box-shadow: 1px 1px 1px blue;
-      &.hide {
-        display: none;
-      }
     }
     .ghost {
-      transition: flex 0.3s linear;
       background: #f40;
     }
   }
