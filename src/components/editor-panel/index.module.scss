@@ -14,21 +14,21 @@
     }
     .flex {
       // box-shadow: 0px 2px 1px red;
-      transition: flex 0.3s linear;
       display: flex;
       border: 1px solid red;
-      &.hide {
-        display: none;
-      }
     }
 
     .com {
-      transition: flex 0.3s linear;
       border: 1px solid blue;
       // box-shadow: 1px 1px 1px blue;
     }
     .ghost {
       background: #f40;
+      opacity: 0.2;
+    }
+
+    .hide {
+      display: none;
     }
   }
 }

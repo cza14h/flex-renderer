@@ -32,7 +32,7 @@ export default class DragContext {
     const target = this.getTarget();
     const initiator = this.getInitiator();
     if (target && initiator) {
-      this.sortLayer([initiator?.chain], target);
+      this.sortLayer([initiator.chain], target);
     }
     this.reset();
   };
